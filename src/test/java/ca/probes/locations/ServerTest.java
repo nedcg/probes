@@ -207,9 +207,44 @@ public class ServerTest {
                         context.assertNotNull(responseBody.getString("email"));
                         context.assertNotNull(responseBody.getString("password"));
                     } else {
-                        context.fail("http request failed - locations");
+                        context.fail("http request failed - users");
                     }
                     async.complete();
                 });
+    }
+
+    @Test
+    public void shouldGetUserInformation(TestContext context) {
+        final Async async = context.async();
+
+        final UserRegistration body = new UserRegistration("eduardo@mail.com", "eduardo123");
+
+        // forward session
+        final WebClient webClient = WebClientSession.create(WebClient.create(vertx));
+
+        Promise<HttpResponse<Buffer>> promise = Promise.promise();
+        webClient
+                .post(port, host, "/users")
+                .putHeader("x-user-id", "sample")
+                .sendJsonObject(JsonObject.mapFrom(body), promise);
+
+        promise.future().onComplete(postResult -> {
+            webClient
+                    .get(port, host, "/users")
+                    .putHeader("x-user-id", postResult.result().bodyAsJsonObject().getString("id"))
+                    .send(getResult -> {
+                        if (!getResult.failed()) {
+                            HttpResponse<Buffer> response = getResult.result();
+                            context.assertEquals(response.statusCode(), 200);
+                            JsonObject responseBody = response.bodyAsJsonObject();
+                            context.assertNotNull(responseBody.getString("id"));
+                            context.assertNotNull(responseBody.getString("email"));
+                            context.assertNotNull(responseBody.getString("password"));
+                        } else {
+                            context.fail("http request failed - users");
+                        }
+                        async.complete();
+                    });
+        });
     }
 }

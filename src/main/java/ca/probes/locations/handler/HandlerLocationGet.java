@@ -11,7 +11,7 @@ public class HandlerLocationGet implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext ctx) {
-        String userId = getUserId(ctx);
+        final String userId = getUserId(ctx);
 
         Session session = ctx.session();
         JsonArray location = session.get(userId);
